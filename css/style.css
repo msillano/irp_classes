@@ -1,0 +1,8 @@
+table, th, td {
+     border: solid 1px #8064a2;
+     border-collapse: collapse;
+} 
+.error {font-family:verdana,arial,tahoma; font-size:12px; font-weight:bold; background-color: #FFEFA0; text-indent:0px; color:red; text-decoration:none; margin:0 auto 10px 25%; width: 50%; padding: 10px; border: solid 1px red;}
+.note {font-family:verdana,arial,tahoma; font-size:12px; background-color: #eaf1dd; text-indent:0px; text-decoration:none; margin: 20px auto 10px auto; width: 700px; padding: 10px; border: solid 1px #8064a2;}
+.key {font-family:verdana,arial,tahoma; font-size:14px; color:black; background-color:#d7e4bc; text-align:center; padding-right: 3px; text-decoration: none;}
+

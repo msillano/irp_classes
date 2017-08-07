@@ -1,0 +1,107 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
+</head>
+<body>
+    <h1> <code>irp_classes</code>: library for IR remote control applications</h1>
+    <hr>
+    <div class='note'>
+        <p>
+            This classes implements the core algorithms required for working with IR remote controls, i.e. encode and decode RAW IR commands, using informations about the IR protocol in <a href="http://www.hifi-remote.com/wiki/index.php?title=IRP_Notation">'IRP notation'.</a> The <code>irp_classes</code> is an 'execution process' for IRPs, extended to <i><b>encode</b></i> and <i><b>decode</b></i> process of IR raw streams.
+            <BR> In this library you also found some methods to handle <i>RAW data streams</i>, without IRP, for 'learn and repeat' applications.
+            <br>
+            <code>irp_classes</code> was designed to help me (and you) to build good applications using IR Remote Control, like media home automation, with <a href="http://www.hifi-remote.com/johnsfine/DecodeIR.html">knowns IRPs</a> and not for analysing or reverse-engineering unknowns IR protocols, because for that are many better applications (IRremote, IrScrutinizer etc..).
+            <BR>
+
+            <p>To store and retrieve IR commands you have many options:
+                <UL>
+                    <LI><b>RAW:</b> big size but fast, car it not requires IRP or processing (format like RAW-0 or any compressed version: RAW-1,RAW-2)
+                        <LI><b>HEX:</b> small, but requires an IRP (format like BIN-1 or BIN-2)
+                            <LI><b>DATA SET:</b> smallest and significant (like {D=7,F=0x3F})
+                                <br> <i>run 'test cases' example: you will see many examples of that formats.</i>
+                </UL>
+                In some cases (e.g. Fujitsu_Aircon_modified) you can have 2 DATA SET: the &lt;device-parameters> and the &lt;protocol-parameters>: this class processes both.
+    </div>
+    <DL>
+        <div class='note'>
+            <h3>Test:</h3> Of course any design using IR is influenced by hardware and by the communications between host and IR device (Serial communications using php in Win environment are not easy). Here some simple example test pages.
+            <br> For a more complex demo see <b><code>remoteDB</code></b>.
+        </div>
+        <hr>
+        <DL>
+            <DT><h4>Test cases for the library <code>irp_classes</code>: encode + decode</h4></DT>
+            <DD>This test don't requires hardware. It produces a RAW IR stream, then decodes it.
+                <BR> Useful, because this test shows all formats and all main methods of <code>irp_classes</code> library.
+                <BR>
+                <small>For more infos, read comments embedded in <code>irp_classes.php</code>.</small>
+                <BR>
+                <BR>
+                <form action='full-test.php' mode='GET'>
+                    Choose protocol:
+                    <select name='protocol'>
+                        <option value='AdNotam'>AdNotam</option>
+                        <option value='Amino'>Amino</option>
+                        <option value='Archer'>Archer</option>
+                        <option value='Denon'>Denon</option>
+                        <option value='DirectTV'>DirectTV</option>
+                        <option value='Fujitsu_Aircon'>Fujitsu_Aircon</option>
+                        <option value='Fujitsu_Aircon_modified'>Fujitsu_Aircon_modified</option>
+                        <option value='Grunding16'>Grunding16</option>
+                        <option value='JVC'>JVC</option>
+                        <option value='NEC1'>NEC1</option>
+                        <option value='NEC2'>NEC2</option>
+                        <option value='Nokia'>Nokia</option>
+                        <option value='OrtekMCE'>OrtekMCE</option>
+                        <option value='RC5'>RC5</option>
+                        <option value='XMP'>XMP</option>
+                        <option value='Zenit'>Zenit</option>
+                    </select> &nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type='submit' value='execute text'>
+                </form>
+
+            </DD>
+            <DT><H4>Demo example: (receive) + decode and analyse test</H4></DT>
+            <DD>This demo can run with capturing HW (Arduino) or it can use some recorded IR RAW data.
+                <BR>
+                <ul>
+                    <li>Arduino: the HW schema and the Arduino sketch can be found in the dir <a href="./arduino/IRHW-Arduino.pdf">'Arduino'</a>
+                    </li>
+                    <li>Serial: this demo on Win requires the free version of <a href='http://www.thebyteworks.com'>PHP Serial extension</a> (download and install it before). Free version is with some limits: you must restart the server before any run (sorry, no Linux version). </li>
+                    <li>If you have problems with serial, it is possible to use the <i>Arduino IDE terminal</i> and copy and paste the IR RAW stream into the <code>decode-test.php</code> code.
+                        <BR>
+                    </li>
+                </ul>
+                The output is similar to previous test, but the protocols* uses recorded real data produced by remote controls. On case of real data, this demo shows also the use of methods processing RAW data without IRP.
+                <BR>
+                <BR>
+                <form action='decode-test.php' mode='GET'>
+                    Choose protocol:
+                    <select name='protocol'>
+                        <option value='AdNotam'>AdNotam</option>
+                        <option value='Amino'>Amino</option>
+                        <option value='Archer'>Archer</option>
+                        <option value='Denon'>Denon</option>
+                        <option value='DirectTV'>DirectTV</option>
+                        <option value='Fujitsu_Aircon'>Fujitsu_Aircon</option>
+                        <option value='Fujitsu_Aircon_modified'>Fujitsu_Aircon_modified</option>
+                        <option value='Grunding16'>Grunding16</option>
+                        <option value='JVC'>JVC*</option>
+                        <option value='NEC1'>NEC1*</option>
+                        <option value='NEC1_16'>NEC1_16*</option>
+                        <option value='NEC2'>NEC2</option>
+                        <option value='Nokia'>Nokia</option>
+                        <option value='OrtekMCE'>OrtekMCE</option>
+                        <option value='RC6'>RC6*</option>
+                        <option value='XMP'>XMP</option>
+                    </select> &nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type='submit' name='captured' value='HW capture'>&nbsp;&nbsp;&nbsp;
+                    <input type='submit' name='recorded' value='RAW recorded'>
+            </DD>
+        </DL>
+        </form>
+        </DD>
+    </DL>
+    <hr>
+    <center> <a href="./../remoteDB/index.html">to remoteDB test</a> &gt;&gt;&gt; </center>
+</body>
+</html>
