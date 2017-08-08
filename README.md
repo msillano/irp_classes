@@ -16,7 +16,7 @@ To store and retrieve IR commands you have many options:
 With this library you have also 2 test pages:
 1. Test cases for the library irp_classes: encode + decode. This test don't requires hardware. It produces a RAW IR stream, then decodes it. 
 2. (receive) + decode and analyse test. This demo can run with capturing HW (Arduino) or it can use some recorded IR RAW data. 
-3. A more complex example can be found in 'remoteDB', a demo application using MySQL database.
+3. A more complex example can be found in 'remoteDB', a demo application using MySQL database (https://github.com/msillano/remoteDB).
 
 Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
