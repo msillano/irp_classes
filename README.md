@@ -22,7 +22,7 @@ Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
 INSTALLATION
 
-Copy all in web area of your server: e.g. ' ...\apache\htdocs\www\phpIRPlib'.
+Copy all in web area of your WAMP server: e.g. ' ...\apache\htdocs\www\phpIRPlib'.
 
 optional:
 If you have Arduino-uno and an IR receiver:
