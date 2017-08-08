@@ -1,6 +1,25 @@
+/*
+  rawRXT02.ino - Example for irp_classes (https://github.com/msillano/irp_classes)
+  Copyright (c) 2017 Marco Sillano.  All right reserved.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
 /* 
  *  rawRxTx02
- *  Receive/transmit IR stream using "Serial php extension".
+ *  Receive/transmit IR stream using "Serial php extension" (http://www.thebyteworks.com/phpserial/php_ser_reference.html)
  *  
  *  Can be also tested standalone,  with 'serial monitor (@9600)': 
  *  when you see 'A'  you send: 
@@ -8,7 +27,9 @@
  *       When red led on, Arduino is ready to receive IR from remote command
  *    'X' + RAW-1 (compressed IR stream) to transmit command to a device
  *    
- *    Uses 'IRlib2' (c) 2014-2017 by Chris Young  ()   
+ *    Uses 'IRlib2' (c) 2014-2017 by Chris Young  (https://github.com/cyborg5/IRLib2)   
+ *
+ *    see https://github.com/msillano/irp_classes
  */
  
 // use IRLibRecvPCI 
