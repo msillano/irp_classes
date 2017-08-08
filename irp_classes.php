@@ -1,4 +1,22 @@
 ﻿<?php
+/*
+  irp_classes - This is an 'execution process' for IRPs, extended to encode and decode IR remote commands.
+  Copyright (c) 2017 Marco Sillano.  All right reserved.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 // This classes was designed for applications using IR remote control, like home control, and not for analysing or 
 //   IR protocols reverse-engineering, because for that they are many better applications (IRremote, IrScrutinizer etc..).
 // The scenario is: having some HW to receive/transmit IR (my favourite is an Arduino), we want an application to 
@@ -120,7 +138,7 @@
 // step 3b) call decodeRaw() with a RAW stream, and optionally dataVerify() to get more infos.
 // see full-test.php, decode-test.php (in dir phpIRPlib)
 //
-// see also remoteDB, a 
+// see also remoteDB (https://github.com/msillano/remoteDB) a MySQL application using irp_classes
 // ---------------------------------------------------------------------------------------
 define('IRP_RAW_WIDE', 0); // $mode values for RAWprocess()
 define('IRP_RAW_PACK', 1);
