@@ -5,7 +5,7 @@ It make easy to build IR applications whit data base and WEB interface.
 In this dir, with irp_classes.pnp, you can found also 2 example applications:
  1) full-test, a test-case for irp_classes.php, showing all main features of the library using many IRP.
  2) decode-test, to decode IR data, recorded or live, using an Arduino IR receiver and a php serial extension.
-A more complex example can be found in 'remoteDB', a demo application using MySQL database.
+A more complex example can be found in 'remoteDB', a demo application using MySQL database. (https://github.com/msillano/remoteDB)
 -------------
 Copy this directory in web area of your server: e.g. ' ...\apache\htdocs\www\phpIRPlib'.
 ------------- optional
