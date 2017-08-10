@@ -119,24 +119,33 @@
 //    - irp_explodeRAW1($raw1)
 //    - irp_implodeRAW1($rawArray)
 // 
-// limits in this implementation
+// Limits in this implementation
 // 1) Do not accepts ? or ?? or ??? in IRP
 // 2) Many different errors in case of not well formed IRP or bad values-set (limited diagnostic)
-// 3) Repeats: accepts only )+; )*; )3; )2+; )X; )X+; (single digit numbers, or single letter variable, no expressions)
-// 4) Accepts(bad IRP): {36k,268}<-1,1|1,-1>[T=1][T=0](7,-6,3,D:4,1:1,T:1,1:2,F:8,C:4,-79m)+ 
-//    and processes it as: {36k,268}<-1,1|1,-1>([T=1][T=0],7,-6,3,D:4,1:1,T:1,1:2,F:8,C:4,-79m)+ 
-// 5) In case of repeated commands in a raw stream, decodeRaw() returns last results in RAW mode, all results in BIN mode.
-// 6) dataVerify() requires a well formed IRP, read comments in code.
-// 7) Data permanence is implemented saving data in a file. 
-// 8) RAWnormalize() (without IRP) can fails with some protocols (better if min_mark_length == min_space_length)
-// 9) This is an experimental version, so many 'echo' for debug are still in place but commented.
+// 3) In case of many commands in a raw stream, decodeRaw() returns last results in RAW mode, all results in BIN mode.
+// 4) dataVerify() requires a well formed IRP, read comments in code.
+// 5) Data permanence is implemented saving data in a file. 
+// 6) RAWnormalize() (without IRP) can fails with some protocols (better if min_mark_length == min_space_length)
+// 7) This is an experimental version, so many 'echo' for debug are still in place but commented.
 //
-// usage:
-// step 1)  create an irp_protocol object. 
-// step 2)  call  setOutputBin() | setOutputRaw().
-// step 3a) call encodeRaw() with a data-set, and optionally RAWprocess() to filter result.
-// step 3b) call decodeRaw() with a RAW stream, and optionally dataVerify() to get more infos.
+// Extensions to standard IRP, as defined in http://www.hifi-remote.com/wiki/index.php?title=IRP_Notation:
+// 1) Repeats: accepts )+; )*; )3; )2+; )X; )X+; single digit numbers, or single letter variable (extension), no expressions.
+// 2) Accepts(bad IRP): {36k,268}<-1,1|1,-1>[T=1][T=0](7,-6,3,D:4,1:1,T:1,1:2,F:8,C:4,-79m)+ 
+//    and processes it as: {36k,268}<-1,1|1,-1>([T=1][T=0],7,-6,3,D:4,1:1,T:1,1:2,F:8,C:4,-79m)+ 
+//
+// usage with IRP:
+// step 1)  create an irp_protocol object using a valid IRP:
+//    $aProtocol = new irp_protocol($IRP); 
+// step 2)  call $aProtocol->setOutputBin() | $aProtocol->setOutputRaw() to set output style
+// step 3a) call $aProtocol->encodeRaw() with a data-set, and optionally $aProtocol->RAWprocess() to filter result.
+// step 3b) call $aProtocol->decodeRaw() with a RAW stream, and optionally $aProtocol->dataVerify() to get more infos.
 // see full-test.php, decode-test.php (in dir phpIRPlib)
+//
+// usage without IRP:
+// step 1)  create an irp_protocol object using NULL:
+//    $aProtocol = new irp_protocol(NULL); 
+// step 2a)  call $aProtocol->RAWnormalize($CAPTURE_RAW ) to normalise CAPTURED
+// step 2b)  call $aProtocol->RAWprocess($NORMALISED_RAW, 1, 38) to compress it in RAW-1
 //
 // see also remoteDB (https://github.com/msillano/remoteDB) a MySQL application using irp_classes
 // ---------------------------------------------------------------------------------------
@@ -210,7 +219,7 @@ class irp_protocol
     private $normmsg = ''; // error message by arrayNormalize()
     var $environ = array(); //---- var store 
     /*
-     * Constructor, requires a valid IRP (string).
+     * Constructor, requires a valid IRP (string) or NULL
      */
     function __construct($newIRP = NULL)
       {
@@ -723,7 +732,7 @@ class irp_protocol
      */
     public function RAWnormalize($RAWdata)
       {
-        $array1 = explode(irp_protocol::CHAR_LIST, $RAWdata); // plain RAW mode
+        $array1 = explode(irp_protocol::CHAR_LIST, $RAWdata); // plain RAW mode, RAW-0 or RAW-1
         $array2 = $this->arrayNormalize($array1, false);
         return implode(irp_protocol::CHAR_LIST, $array2);
       }

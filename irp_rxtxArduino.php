@@ -48,7 +48,7 @@ function txArduino($raw)
     ser_write($raw); // send data
   }
 //  receive RAW fron Arduino
-function rxArduino()
+function rxArduino($protocol=NULL)
   {
     $arduinocom = 'COM3'; // TODO: change here if required
     if (!ser_isopen())
