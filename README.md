@@ -34,3 +34,5 @@ Download and install 'PHP Serial extension' free from http://www.thebyteworks.co
 
 note:
 If you have some different IR HW, modify irp_rxtxArduino.php to receive RAW data from your HW.
+
+![Arduino IR](./Arduino/arduinoIR.jpg)
