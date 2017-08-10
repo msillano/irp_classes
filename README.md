@@ -16,7 +16,7 @@ To store and retrieve IR commands you have many options:
 With this library you have also 2 test pages:
 1. Test cases for the library irp_classes: encode + decode. This test don't requires hardware. It produces a RAW IR stream, then decodes it. See examples/example_Fujitsu_aircon_modified_test.pdf.
 2. (receive) + decode and analyse test. This demo can run with capturing HW (Arduino) or it can use some recorded IR RAW data. See examples/example_NEC1_decode.pdf. 
-3. A more complex example can be found in 'remoteDB', a demo application using MySQL database (https://github.com/msillano/remoteDB).
+3. A more complex example can be found in 'remotesDB', a demo application using MySQL database (https://github.com/msillano/remotesDB).
 
 Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
@@ -26,11 +26,11 @@ Copy all in web area of your WAMP server: e.g. ' ...\apache\htdocs\www\phpIRPlib
 
 optional:
 If you have Arduino-uno and an IR receiver:
-See the dir Arduino
+     -  See the dir Arduino
 
 optional:
 Serial communications php-Arduino in windows:
-Download and install 'PHP Serial extension' free from http://www.thebyteworks.com (with some limits).
+    -  Download and install 'PHP Serial extension' free from http://www.thebyteworks.com (with some limits).
 
 note:
 If you have some different IR HW, modify irp_rxtxArduino.php to receive RAW data from your HW.
