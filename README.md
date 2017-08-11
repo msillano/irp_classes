@@ -8,6 +8,8 @@ irp_classes was designed to help me (and you) to build good applications using I
 with known IRPs and not for analysing or reverse-engineering unknown IR protocols, because for that are many better applications
 (IRremote, IrScrutinizer etc..). 
 
+The global desing is different from usual: Arduino (or other hardware) does only very simple tasks: to receive and to transmit RAW IR signals. All the work is done on PHP, and it is universal, based on IRPs, no size or protocols limits. The irp_class can be used with a big database in WAMP environment, as I do in remotesDB (https://github.com/msillano/remotesDB),  library and demo application for replica of any IR remote control (air condioners included).
+
 To store and retrieve IR commands you have many options:
 - RAW: big size but fast, car it not requires IRP or processing (format like RAW-0 or any compressed version: RAW-1,RAW-2)
 - HEX: small, but requires an IRP (format like BIN-1 or BIN-2)
@@ -16,7 +18,6 @@ To store and retrieve IR commands you have many options:
 With this library you have also 2 test pages:
 1. Test cases for the library irp_classes: encode + decode. This test don't requires hardware. It produces a RAW IR stream, then decodes it. See examples/example_Fujitsu_aircon_modified_test.pdf.
 2. (receive) + decode and analyse test. This demo can run with capturing HW (Arduino) or it can use some recorded IR RAW data. See examples/example_NEC1_decode.pdf. 
-3. A more complex example can be found in 'remotesDB', a demo application using MySQL database (https://github.com/msillano/remotesDB).
 
 Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
