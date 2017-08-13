@@ -21,11 +21,11 @@ With this library you have also 2 test pages:
 
 Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
-LIMITS (with Arduino uno Rev.3)
- -  Raw stream receive precision = +/-  2 microseconds
- -  Raw transmit frequencies:  30KHz - 57 KHz
- -  Raw receive buffer size: 300
- -  Raw transmit: 300
+LIMITS 
+ -  Raw stream receive precision = +/- 1 microsecond (with Arduino uno Rev.3: +/-  2 microseconds)
+ -  Raw transmit frequencies: no limits (with Arduino uno Rev.3:  30KHz - 57 KHz)
+ -  Raw receive buffer size: no limits (with Arduino uno Rev.3:  300)
+ -  Raw transmit size:no limits (with Arduino uno Rev.3:  300)
 
 INSTALLATION
 
