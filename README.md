@@ -21,7 +21,7 @@ With this library you have also 2 test pages:
 
 Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
-LIMITS
+LIMITS (with Arduino uno Rev.3)
  -  Raw stream receive precision = +/-  2 microseconds
  -  Raw transmit frequencies:  30KHz - 57 KHz
  -  Raw buffer size: 300
