@@ -24,7 +24,8 @@ Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 LIMITS (with Arduino uno Rev.3)
  -  Raw stream receive precision = +/-  2 microseconds
  -  Raw transmit frequencies:  30KHz - 57 KHz
- -  Raw buffer size: 300
+ -  Raw receive buffer size: 300
+ -  Raw transmit: no limits
 
 INSTALLATION
 
