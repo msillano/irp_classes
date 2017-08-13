@@ -21,6 +21,11 @@ With this library you have also 2 test pages:
 
 Arduino: the HW schema and the Arduino sketch can be found in the dir 'Arduino'
 
+LIMITS
+ -  Raw stream receive precision = +/-  2 microseconds
+ -  Raw transmit frequencies:  30KHz - 57 KHz
+ -  Raw buffer size: 300
+
 INSTALLATION
 
 Copy all in web area of your WAMP server: e.g. ' ...\apache\htdocs\www\phpIRPlib'.
