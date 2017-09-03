@@ -26,6 +26,14 @@ LIMITS
  -  Raw transmit frequencies: no limits (with Arduino uno Rev.3:  30KHz - 57 KHz)
  -  Raw receive buffer size: no limits (with Arduino uno Rev.3:  300)
  -  Raw transmit size:no limits (with Arduino uno Rev.3:  300)
+ 
+ WORK IN PROGRESS
+ This is a work in progress project:
+ 
+ 1) irp_classes (https://github.com/msillano/irp_classes): base classes and libray to work with IRP and RAW IR streams. Demo:  (receive) + decode and analyse IR commands.
+ 
+ 2) remotesDB (https://github.com/msillano/remotesDB):  MySQL DB for IRP applications and related php tools. Demo: replica of any remote control in DB.
+ 
 
 INSTALLATION
 
