@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /*
   decode-tast-php - Example for irp_classes (https://github.com/msillano/irp_classes)
   Copyright (c) 2017 Marco Sillano.  All right reserved.
@@ -25,45 +25,16 @@ include("$d/irp_rxtxArduinoMXQ.php");
 // The free serial communication fails after 1024 bytes... you must restart the server before any test! 
 // But it is ok for demo purposes. 
 // =================================================================================================
-function rawMicros($raw)
-  {
-    // excludes first and last times
-    $sum   = 0;
-    $times = explode('|', $raw);
-    for ($k = 4; $k < count($times) - 8; $k++) // see irp_classes @572 $skipfirst, $skiplast 
-        $sum += abs($times[$k]);
-    return $sum;
-  }
-// ------------------------------
 $protocol = 'JVC';               // default: change here to use this page alone
 if (isset($_GET['protocol']))    // uses parameter from index.php
   {
     $protocol = $_GET['protocol'];
   }
-  
-  $dataRAW = $protocol . '_RAW';
-  //   ===============  start serial arduino
- $CAPTURE_RAW ='unknown';
-/*
- if (isset($_GET['captured']))    // HW capture
+$dataRAW = $protocol . '_RAW';
+if (isset($_GET['captured']))    // HW capture
   {
-    $id  =  pushGETrequest(1);
-    movePage(100,"./wait_rx.php?protocol=$idprotocol&id=$id&remote=$idremote&code=$code&key=$key&mode=$mode");    
- }
-  
-if (isset($_GET['id']))
-  {
-   $dataRAW = 'CAPTURE_RAW';
-   $id = $_GET['id'];
-   $r = popGETrequest($id );
-   $CAPTURE_RAW = irp_onion($r,'(',')');
+    $dataRAW = 'CAPTURE_RAW';
   }
-*/
-  $r = rxArduino();
-  $CAPTURE_RAW = irp_onion($r,'(',')');
-
-//   ===============  end serial arduino
-
 //----------------------- some IRP protocols and RAW data examples for test:
 $JVC                         = '{38k,527}<1,-1|1,-3>(16,-8,(D:8,F:8,1,-45)+)';
 $JVC_RAW                     = '8422|-4234|506|-1602|506|-1602|510|-546|506|-550|506|-550|502|-1606|506|-546|506|-1602|510|-1602|506|-1602|506|-546|506|-550|506|-550|506|-1602|506|-550|502|-550|506|-1000'; //  captured data
@@ -135,14 +106,24 @@ $Fujitsu_Aircon_modified     = '{38.4k,413}<1,-1|1,-3>(8,-4,20:8,99:8,0:8,16:8,1
 $Fujitsu_Aircon_modified_RAW = '3304|-1652|413|-413|413|-413|413|-1239|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-1239|413|-1239|413|-413|413|-413|413|-413|413|-1239|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-1239|413|-1239|413|-1239|413|-1239|413|-1239|413|-1239|413|-1239|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-1239|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-1239|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-1239|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-413|413|-1239|413|-413|413|-413|413|-1239|413|-1239|413|-1239|413|-413|413|-1239|413|-413|413|-413|413|-413|413|-104300';
 // ---------------------------
 echo '<HTML><HEAD></HEAD><BODY>';
-  
-   
- if (isset($_GET['id'])){
- 
-    echo 'CAPTURED RAW = {' . $CAPTURE_RAW . '}<br>';
-}
+function rawMicros($raw)
+  {
+    // excludes first and last times
+    $sum   = 0;
+    $times = explode('|', $raw);
+    for ($k = 4; $k < count($times) - 8; $k++) // see irp_classes @572 $skipfirst, $skiplast 
+        $sum += abs($times[$k]);
+    return $sum;
+  }
 // ============================================ test code ==================
 echo "<b>==== DECODING IR PROTOCOL <i>$protocol</i> ====</b><br><br>";
+// --------------------  receiving data
+if (isset($_GET['captured']))
+  {
+    $CAPTURE_RAW = rxArduino();
+    echo 'CAPTURED RAW = {' . $CAPTURE_RAW . '}<br>';
+     //   ===============  end serial arduino
+  }
 if ( $CAPTURE_RAW[0] != '*') {  
 // ----------------------------------- processing data
 echo " ==== PROTOCOL INFOS by toString() ====<br>";

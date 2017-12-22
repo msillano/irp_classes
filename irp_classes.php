@@ -149,9 +149,13 @@
 //
 // see also remoteDB (https://github.com/msillano/remoteDB) a MySQL application using irp_classes
 // ---------------------------------------------------------------------------------------
-define('IRP_RAW_WIDE', 0); // $mode values for RAWprocess()
+define('IRP_RAW_WIDE', 0); // $rmode values for RAWprocess()
 define('IRP_RAW_PACK', 1);
 define('IRP_RAW_BYTE', 2);
+//
+define('SKIPFIRST', 2);    // to skip head and tail of RAW data
+define('SKIPLAST', 1);
+
 /*
  * Main class
  */
@@ -192,7 +196,7 @@ class irp_protocol
     private $outMode = 'raw'; // OUT_RAW|OUT_BIN  see setOutputBin()/setOutputRaw()
     private $inMode = 'raw'; // OUT_RAW|OUT_BIN, internal use
     private $bitData = '';
-    private $bitptr = 0;
+    public  $bitptr = 0;
     //---- decode
     public $ukRaw = ''; // input RAW data
     public $ukNorm = array(); // Normalized RAW data
@@ -438,13 +442,15 @@ class irp_protocol
           {
             return ('*** ERROR: decoder fails near RAW[' . strval((int) $this->errPosition + 1) . ']');
           }
+ //  echo ' DataDECODED before: <pre>';  print_r ($this->dataDecoded); echo '</pre>';
+  		  
         // update S from S:4:4  
         foreach ($this->dataDecoded as $key => $value)
           {
             if (!ctype_alnum($key))
               {
                 $pars = explode(':', $key);
-                //             print_r($pars); echo ' from '.$key.'<br>';
+  //  print_r($pars); echo ' from '.$key.'<br>';
                 if (count($pars) == 3)
                   {
                     $val = 0;
@@ -469,19 +475,26 @@ class irp_protocol
                             else
                                 continue;
                     }
-                    //   echo ' pars[0] now'.$pars[0].'<br>';
+ //               echo ' pars[0] now '.$pars[0].'<br>';
                     if (isset($this->dataDecoded[$pars[0]]))
-                        $this->dataDecoded[$pars[0]] += $val;
+                        $this->dataDecoded[$pars[0]] |= $val;
                     else
                         $this->dataDecoded[$pars[0]] = $val;
                   }
                 if (count($pars) == 2)
-                  {
+                  {			 
+// errPosition		
+				  if (ctype_digit($pars[0]))	{	
+					   $val = $pars[0] & $this->BMASK[$pars[1]];
+					   if ($val != $value) {
+					     $errmsg = "*** ERROR: bad value [$key]=$value";
+                         $this->errPosition = 0;
+					      }					        
+					   }
                   }
               }
           }
-        //  echo ' DataDECODED after: <br>';
-        //   print_r ($this->dataDecoded); echo '<br>';
+//      echo ' DataDECODED after: <pre>';  print_r ($this->dataDecoded); echo '</pre>';
         if ($this->isOutputRaw())
           {
             $tmp = '';
@@ -501,24 +514,26 @@ class irp_protocol
           }
       }
     /*
-     * RAWprocess($raw, $mode, [$frequence]) 
+     * RAWprocess($raw, $rmode, [$frequence]) 
      * This utility processes a RAW|BIN stream (captured by HW sensor or from  encode/decode).
      * 1) RAW: Unifies double marks or double spaces
      *    BIN: Add spaces every 8 bit, right padded with zeros.
-     *    If mode IRP_RAW_WIDE (0) returns
+     *    If rmode IRP_RAW_WIDE (0) returns
      * 2) RAW: Finds a BASEtime giving a time error less than (deltaTime/TIME_FACTOR_ERR), and adds some infos 
      *    required to send the IR: {freq,BASEtime,data-num} To receive this format is required an integer array.
      *    BIN: Transforms in HEXSTRING (can be used with encodeRaw()) right padded with zeros.
-     *    If mode IRP_RAW_PACK (1) returns 
+     *    If rmode IRP_RAW_PACK (1) returns 
      * 3) RAW: Any data value>127 (or  <-127) is split in many fields, so all fields are BYTES. Adds {freq,BASEtime,data-num}
      *    This format will reduce the RAM used because to receive this format is required an byte array.
      *    BIN: Transforms in HEXBYTE, if required right padded with zeros.
-     *    If mode IRP_RAW_BYTE (2) returns 
+     *    If rmode IRP_RAW_BYTE (2) returns 
      *  Note: if the parameter 'frequence' is present, this don't uses IRP: this function can be uses with any RAW stream.
      */
-    public function RAWprocess($raw, $mode, $frequence = NULL)
+    public function RAWprocess($raw, $rmode, $frequence = NULL)
       {
-        if ($raw[0] == '*')
+        if (!isset($raw[0]))
+            return;
+		if ($raw[0] == '*')
             return;
         if (strpos($raw, irp_protocol::CHAR_LIST) === false) // data in BIN mode
           {
@@ -528,7 +543,7 @@ class irp_protocol
               {
                 if ($sended == '')
                     continue;
-                if ($mode == IRP_RAW_WIDE)
+                if ($rmode == IRP_RAW_WIDE)
                   {
                     for ($i = 0; $i < strlen($sended); $i += 8)
                       {
@@ -538,8 +553,8 @@ class irp_protocol
                         $new .= $part . ' ';
                       } //$i = 0; $i < strlen($sended); $i += 8
                     $new .= ' ';
-                  } //$mode == IRP_RAW_WIDE
-                if ($mode == IRP_RAW_PACK)
+                  } //$rmode == IRP_RAW_WIDE
+                if ($rmode == IRP_RAW_PACK)
                   {
                     for ($i = 0; $i < strlen($sended); $i += 16)
                       {
@@ -549,8 +564,8 @@ class irp_protocol
                         $new .= sprintf('%04X', bindec($part));
                       } //$i = 0; $i < strlen($sended); $i += 16
                     $new .= ' ';
-                  } //$mode == IRP_RAW_PACK
-                if ($mode == IRP_RAW_BYTE)
+                  } //$rmode == IRP_RAW_PACK
+                if ($rmode == IRP_RAW_BYTE)
                   {
                     for ($i = 0; $i < strlen($sended); $i += 8)
                       {
@@ -560,11 +575,11 @@ class irp_protocol
                         $new .= sprintf('%02X', bindec($part)) . ' ';
                       } //$i = 0; $i < strlen($sended); $i += 8
                     $new .= ' ';
-                  } //$mode == IRP_RAW_BYTE
+                  } //$rmode == IRP_RAW_BYTE
               } //$copies as $sended
             return trim($new);
           } //!(strpos($raw, irp_protocol::CHAR_LIST))
-        //  RAW mode -----------------  
+        //  RAW rmode -----------------  
         $useF = $frequence;
         if ($frequence == NULL)
             $useF = round($this->frequence); // uses frequence from IRP
@@ -586,10 +601,11 @@ class irp_protocol
             if (isset($times[$i]) && ($times[$i] == 0))
                 unset($times[$i]); // eliminates zeros
           } //$i = 0; $i < $imax; $i++
+	// echo "found min = $min <br>";
         // restore index	
         $times = array_values($times);
         //  RAW processing 0 ------------  
-        if ($mode == IRP_RAW_WIDE)
+        if ($rmode == IRP_RAW_WIDE)
             return implode(irp_protocol::CHAR_LIST, $times);
         // try to found a good deltaTime (also if  $this->tBase == 1)
         // get average of shorts values
@@ -599,21 +615,22 @@ class irp_protocol
         $totTime   = 0;
         $last      = 0;
         //  excludes first and last times from totTime.
-        $skipfirst = 4;
-        $skiplast  = 8;
-        for ($i = $skipfirst; $i < count($times) - $skiplast; $i++)
-          {
-            $x = abs($times[$i]);
+		$tot = count($times);
+        foreach ($times as $key => $value)
+	      if (irp_isInRange($key, $tot)){
+            $x = abs($value);
             $totTime += $x;
-            if (($x <= $min) && ($x > 0))
+            if (abs($x) <= $min )
               {
-                $ssum += $x;
+                $ssum += abs($x);
                 $n++;
               }
           }
         //  uses  $this->tBase or average ( case not IRP)
-        if (($frequence != NULL) || ($this->tBase == 1)) // alone
+		$this->deltaTime = $min;
+        if (($frequence !== NULL) || ($this->tBase == 1)) // alone
           {
+		  if ($n >0)
             $this->deltaTime = round($ssum / $n);
           }
         else
@@ -644,12 +661,11 @@ class irp_protocol
           {
             $step = round($this->deltaTime / $factor[$ntest]); // 
             $err  = 0.0;
-            //   echo 'step = '.$step.'<br>';      
+ //     echo 'deltaTime ='.$this->deltaTime.' step = '.$step.'<br>';      
             if ($step == 0)
                 return;
-            for ($i = $skipfirst; $i < count($times) - $skiplast; $i++)
-              {
-                $t = $times[$i];
+			foreach ($times as $key => $t)
+	            if (irp_isInRange($key, $tot)){	
                 if ($t != 0)
                   {
                     $v = round($t / $step);
@@ -672,7 +688,7 @@ class irp_protocol
             // now trims step on total time    
             while (true)
               {
-                $newTot = 0;
+                $newTot = 1;
                 $b      = array_values($times);
                 $c      = array();
                 for ($i = 0; $i < count($b); $i++)
@@ -686,8 +702,8 @@ class irp_protocol
                       {
                         $raw = round($b[$i] / $step);
                       }
-                    if ($i >= $skipfirst && $i < count($times) - $skiplast)
-                        $newTot += abs($raw * $step);
+               	    if (irp_isInRange($i, $tot))	
+                         $newTot += abs($raw * $step);
                     $b[$i] = $raw;
                     while ($raw > 127)
                       {
@@ -716,12 +732,12 @@ class irp_protocol
             //	now $b[], $c[], and $step are ok
             // normalize last space
             //  RAW processing 1 ------------  
-            if ($mode == IRP_RAW_PACK)
+            if ($rmode == IRP_RAW_PACK)
                 return '{' . $useF . ',' . $step . ',' . count($b) . '}' . implode(irp_protocol::CHAR_LIST, $b);
             //  RAW processing 2 ------------  
-            if ($mode == IRP_RAW_BYTE)
+            if ($rmode == IRP_RAW_BYTE)
                 return '{' . $useF . ',' . $step . ',' . count($c) . '}' . implode(irp_protocol::CHAR_LIST, $c);
-            echo 'ERROR: bad mode value, only 0,1,2 ! <br>';
+            echo 'ERROR: bad rmode value, only 0,1,2 ! <br>';
             return;
           } //true
       }
@@ -740,6 +756,7 @@ class irp_protocol
     //  Uses different algorithms if useIRP = true|false
     private function arrayNormalize($dataArray, $useIRP = true)
       {
+//	  echo "<pre>";print_r($dataArray);echo "</pre><br>";
         $this->normmsg = '';
         // echo 'expected   -  mark: '.$this->minM.' space: '.$this->minS.'<br>';
         // test condition, usually ok after __constructor, ever ok after first decode
@@ -748,28 +765,33 @@ class irp_protocol
             $this->normmsg = 'NO RAW NORMALIZATION because min/max code not set';
             return $dataArray; // can't normalize
           }
+		$tot = count($dataArray);
         $rawminM = 99999999;
         $rawminS = -99999999;
         // find min 
-        foreach ($dataArray as $time1)
-          {
+      foreach ($dataArray as $key => $time1)
+	      if (irp_isInRange($key, $tot)){
             if ($time1 > 0 && ($time1 < (int) $rawminM))
                 $rawminM = $time1;
             if ($time1 < 0 && ($time1 > (int) $rawminS))
                 $rawminS = $time1;
-          }
+		    }
         //  echo 'minimun    -  mark: '.$rawminM.' space: '.$rawminS.'<br>';
-        // limit min values to do averages
-        $rawminM = round($rawminM * 1.33);
-        $rawminS = round($rawminS * 1.33);
-        // echo ' test-min  -  mark: '.$rawminM.' space: '.$rawminS.'<br>';
+        // limit min values to do averages: +/- 30%, limit +/- 90u 
+        $rawminM1 = round($rawminM +90);
+		$rawminM2 = round($rawminM * 1.30);
+	    $rawminM = ($rawminM2 < $rawminM1 )? $rawminM2:$rawminM1;
+	    $rawminS1 = round($rawminS -90);
+        $rawminS2 = round($rawminS * 1.30);
+ 	    $rawminS =($rawminS2 > $rawminS )? $rawminS2:$rawminS1;
+        //  echo ' test-min  -  mark: '.$rawminM.' space: '.$rawminS.'<br>';
         // average of low times
         $sumM    = 0;
         $countM  = 0;
         $sumS    = 0;
         $countS  = 0;
-        foreach ($dataArray as $time1)
-          {
+        foreach ($dataArray as $key => $time1)
+ 	      if (irp_isInRange($key, $tot)){
             if ($time1 > 0 && $time1 < $rawminM)
               {
                 $sumM += $time1;
@@ -780,10 +802,11 @@ class irp_protocol
                 $sumS += $time1;
                 $countS++;
               }
-          }
+		   }
+          
         if (($countM == 0) || ($countS == 0))
           {
-            $this->normmsg = 'NO RAW NORMALIZATION because internal error';
+            $this->normmsg = 'NO RAW NORMALIZATION, less than '.(SKIPFIRST + SKIPLAST).' values.';
             return $dataArray; // don't normalize
           }
         $this->avgM = round($sumM / $countM);
@@ -807,14 +830,14 @@ class irp_protocol
           }
         // more safety check
         if ($useIRP)
-            if (($this->deltaM > $this->minM / 3) || (abs($this->deltaS) > abs($this->minS) / 3))
+           if ((abs($this->deltaM) > abs($this->minM) / 4) || (abs($this->deltaS) > abs($this->minS) / 4))
               {
                 // some gone bad, no normalization
                 $this->normmsg = 'NO RAW NORMALIZATION because security check';
                 return $dataArray;
               }
         if (!$useIRP)
-            if (($this->deltaM > $this->avgM / 3) || (abs($this->deltaS) > abs($this->avgS) / 3))
+            if ((abs($this->deltaM) > abs($this->avgM) / 4) || (abs($this->deltaS) > abs($this->avgS) / 4))
               {
                 // some gone bad, no normalization
                 $this->normmsg = 'NO RAW NORMALIZATION because security check';
@@ -874,14 +897,13 @@ class irp_protocol
             echo '+++ WARNING: dataVerify() must be called only after decodeRaw() <br>';
             return;
           } //strlen($this->bitDecoded) == 0
-        if ($this->isError()) // in case of error
+       if ($this->errPosition > 0) // in case of error
           {
             if (!$verbose)
                 return '{}|{}|false';
             $out1 = '';
             $out2 = '';
             $msg  = '<br>------------- ERROR @item[' . ($this->errPosition + 1) . '] / ' . count($this->ukNorm) . ' <br>';
-            
             $copies = explode(' ', $this->bitDecoded); // repetitions
             foreach ($copies as $sended)
               {
@@ -906,6 +928,7 @@ class irp_protocol
             $msg .= 'BIN-1 = ' . rtrim($out2, ' -') . '<br>';
             return trim($msg);
           }
+ //     echo "<pre>"; print_r($this->dataDecoded); echo "</pre>";
         $store         = $this->environ;
         $this->environ = $this->dataDecoded;
         $mainStream    = new irp_bitStream($this, $this->baseBSpec, $this->IRStream, 1);
@@ -949,7 +972,8 @@ class irp_protocol
         // building output 
         if ($verbose)
           {
-            $result = 'Processed ' . $this->ukptr . ' data. <br>';
+            $result = 'Processed ' . count($this->ukNorm) . ' samples. <br>';
+            $result .= 'Processed ' . strlen($this->bitDecoded) . ' bits. <br>';
             //            if ($this->doRAWnormalization){
             $result .= '<br>------------- RAW NORMALIZED <br>';
             $result .= ' Marks  - required:  ' . $this->minM . '  average:  ' . $this->avgM . '  delta: ' . $this->deltaM . '<br>';
@@ -1043,7 +1067,10 @@ class irp_protocol
                 $result .= '' . $key . ' = ' . $r . (($v == $this->dataDecoded[$key]) ? '  OK' : ' ** BAD ( found ' . $this->dataDecoded[$key] . ') **') . '<br>';
           }
         if (!$verbose)
-            $result .= ($allok) ? 'true' : 'false';
+            $result .= ($allok && ($this->errPosition < 0)) ? 'true' : 'false';
+        else 
+		    if ($this->errPosition == 0)
+    		    $result .= '*** ERROR in fixed values. <br>';
         $this->environ = $store;
         return $result;
       }
@@ -1125,7 +1152,10 @@ class irp_protocol
                 case 3:
                     echo "Encoding   = VARIABLE PHASE" . '<br>';
                     break;
-            } //$this->baseBSpec->encoding
+                case 4:
+                    echo "Encoding   = VARIABLE MARK SPACE" . '<br>';
+                    break;
+           } //$this->baseBSpec->encoding
             echo "Coding map =";
             print_r($this->baseBSpec->codeBit);
             echo '<br>MaxTime in code = ' . $this->baseBSpec->getMaxCodeTime() . 'u [' . round($this->baseBSpec->getMaxCodeTime() / $this->tBase) . '] <br>';
@@ -1220,7 +1250,10 @@ class irp_protocol
         if ((gettype($number) == 'string') && !ctype_digit($number))
             return $number;
         $tmp = '0000' . strtoupper(dechex($number));
-        $tmp = substr($tmp, -4);
+		if (strlen($tmp)>8)
+		   $tmp = substr($tmp, -8);
+		 else
+           $tmp = substr($tmp, -4);
         return '[0x' . $tmp . '] ' . $number;
       }
     // Test is var a variation?: i.e. exists in IRstream a item like var=X ?
@@ -1326,6 +1359,7 @@ class irp_bitSpec
     const UNKNOWN = 0; // code style const
     const VARIABLE_SPACE = 1;
     const VARIABLE_MARK = 2;
+    const VARIABLE_MARK_SPACE = 4;
     const PHASE_SHIFT = 3;
     //    
     private $myProtocol = null; // the Protocol global object  
@@ -1410,11 +1444,11 @@ class irp_bitSpec
           {
             for ($i = 1; $i < $ncode; $i++)
               {
-                $mark &= ($this->normCode[$i - 1][0] == $this->normCode[$i][0]);
-                $space &= ($this->normCode[$i - 1][1] == $this->normCode[$i][1]);
-                $phase &= ($this->normCode[$i - 1][0] == $this->normCode[$i][1]);
-                $phase &= ($this->normCode[$i - 1][1] == $this->normCode[$i][0]);
-                $sign &= (($this->normCode[$i - 1][0] * $this->normCode[$i][0]) > 0); // first code constant sign
+                $mark  &= ($this->normCode[$i - 1][0] == $this->normCode[$i][0]);  // mark constant
+                $space &= ($this->normCode[$i - 1][1] == $this->normCode[$i][1]);  // space constant
+                $phase &= ($this->normCode[$i - 1][0] == $this->normCode[$i][1]);  // inverted
+                $phase &= ($this->normCode[$i - 1][1] == $this->normCode[$i][0]);  // inverted
+                $sign  &= (($this->normCode[$i - 1][0] * $this->normCode[$i][0]) > 0); // first code constant sign
               } //$i = 1; $i < $ncode; $i++
           } //($ncode > 1) && (gettype($this->codeBit[0]) == 'array') && isset($this->codeBit[0][1])
         $this->encoding = self::UNKNOWN;
@@ -1424,6 +1458,8 @@ class irp_bitSpec
                 $this->encoding = self::VARIABLE_SPACE;
             if ($space)
                 $this->encoding = self::VARIABLE_MARK;
+           if (!$space && !$mark && $sign)
+                $this->encoding = self::VARIABLE_MARK_SPACE;				
             if ($phase || !$sign) // PHASE_SHIFT extended to all codes with first sign not constant
                 
             // useful in decode phase
@@ -1539,13 +1575,13 @@ class irp_bitSpec
         if ($this->myProtocol->isDecode())
           {
             $test = $this->toRaw($exp);
-            //   echo ' duration2raw start: duration ='.$exp.' ==>  ' . $test . ' <br>';
+ //         echo ' duration2raw start: duration ='.$exp.' ==>  ' . $test . ' <br>';
             $p    = $this->myProtocol->ukptr;
             if ($p >= count($this->myProtocol->ukNorm))
                 return $result;
             if ($test * $this->myProtocol->ukNorm[$p] < 0)
               {
-                //  echo ' duration2raw BAD duration @'.$p.' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
+  //              echo ' duration2raw BAD duration @'.$p.' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
                 if (!$this->myProtocol->isOutputRaw())
                     return $result;
                 // adds to result this duration     
@@ -1553,7 +1589,7 @@ class irp_bitSpec
               }
             if (($this->testTime($test, $this->myProtocol->ukNorm[$p])))
               {
-                //  echo ' duration2raw FOUND duration @'.$p.' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
+  //             echo ' duration2raw FOUND duration @'.$p.' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
                 $this->myProtocol->ukptr++;
               } //$test == $this->myProtocol->ukNorm[$p]
             else
@@ -1563,13 +1599,13 @@ class irp_bitSpec
                   {
                     if (abs($test) < abs($this->myProtocol->ukNorm[$p]) && !$this->testTime($test, $this->myProtocol->ukNorm[$p]))
                       {
-                        //   echo ' duration2raw REDUCED duration @' . $p . ' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
+  //                      echo ' duration2raw REDUCED duration @' . $p . ' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
                         $this->myProtocol->ukNorm[$p] -= $test;
                         $this->myProtocol->ukExtra += abs($test);
                       } //abs($test) < abs($this->myProtocol->ukNorm[$p])
                     else
                       {
-                        //    echo ' duration2raw SKIP duration @' . $p . ' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
+   //                     echo ' duration2raw SKIP duration @' . $p . ' required = ' . $test . ' Found = ' . $this->myProtocol->ukNorm[$p] . ' <br>';
                         $this->myProtocol->ukptr++;
                       }
                   } //($test * (int) $this->myProtocol->ukNorm[$p]) > 0
@@ -1593,7 +1629,7 @@ class irp_bitSpec
         for ($i = 0; $i < ceil($number / $this->bitCoded); $i++) // for coding units required
           {
             $tcoded = '';
-            $y      = '';
+            $y      = -5;
             $code   = 0;
             $found  = true;
             //  
@@ -1612,20 +1648,24 @@ class irp_bitSpec
                       }
                     $test  = $testc[$j];
                     $found = $found && $this->testTime($test, $this->myProtocol->ukNorm[$k + $j]); // test standard?
-                    //  echo ' decodeBit exact-test '.$code.'['.$j.'] test @['.($k+$j).']= '. $this->myProtocol->ukNorm[$k+$j].' required '.$test.' found: '.(($found)?'true':'false').'<br>';
+  //              echo ' decodeBit exact-test '.$code.'['.$j.'] test @['.($k+$j).']= '. $this->myProtocol->ukNorm[$k+$j].' required '.$test.' found: '.(($found)?'true':'false').'<br>';
                     if (!$found && ($test * $this->myProtocol->ukNorm[$k + $j] > 0)) // not found and same sign
                       {
-                        //  conditions for test-less
-                        if (($tot == 1) || //only one value per code, like asynchronous
-                            (($this->encoding == self::PHASE_SHIFT) && ($j == $tot - 1)) || // last bit in phase-shift
-                            
-                        //                          (($this->encoding == self::UNKNOWN) && ($j == $tot - 1))||  // last bit in unknown protocols(?)
-                            (abs($this->myProtocol->ukNorm[$k + $tot - 1]) > 5 * $this->getMaxCodeTime()) // if very long duration
+ //  conditions for test-less
+                     if (($tot == 1) || //only one value per code, like asynchronous
+//						($j == $tot - 1)   // LAST BIT, ANY CASE
+// last bit of a cycle, not total
+                 (abs($this->myProtocol->ukNorm[$k + $j]) > 5 * $this->getMaxCodeTime()) ||  // long duration
+                 (($this->encoding == self::PHASE_SHIFT) && ($j == $tot - 1))  || // last bit in phase-shift
+                 (($this->encoding == self::UNKNOWN) && ($j == $tot - 1))   // last bit in unknown protocols
+				 || (($k + $j +1) == count($this->myProtocol->ukNorm) )  // last test, any case
+	//					 (abs($this->myProtocol->ukNorm[$k + $j]) > 5 * $this->getMaxCodeTime())
+  //                          (abs($this->myProtocol->ukNorm[$k + $tot - 1]) > 5 * $this->getMaxCodeTime()) // if very long duration
                             )
                           {
                             $less  = (abs($test) < abs($this->myProtocol->ukNorm[$k + $j]));
                             $found = $less;
-                            // echo ' decodeBit less-test '.$code.' test ['.($k+$j).'] '. $this->myProtocol->ukNorm[$k+$j].' required '.$test.' found: '.(($less)?'true':'false').'<br>';
+   //                   echo ' decodeBit less-test '.$code.' test ['.($k+$j).'] '. $this->myProtocol->ukNorm[$k+$j].' required '.$test.' found: '.(($less)?'true':'false').'<br>';
                           }
                       }
                     if (!$found)
@@ -1641,24 +1681,28 @@ class irp_bitSpec
                         $this->myProtocol->ukExtra += abs($test);
                         $this->myProtocol->ukptr += $tot - 1;
                         $y = $code;
-                        //  echo ' decodeBit set less = '.decbin($y).'<br>';                      
+ //                       echo ' decodeBit set less = '.decbin($y).'<br>';                      
                         break; // done
                       }
                     if (!$less)
                       {
                         $this->myProtocol->ukptr += $tot;
                         $y = $code; // done
-                        // echo ' decodeBit set exact = '.decbin($y).'<br>';                     
+ //                       echo ' decodeBit set exact = '.decbin($y).'<br>';                     
                         break;
                       }
                   }
                 $code++; // else more test   
               } //$this->codeBit as $testc
-            $tmp = '00000000' . decbin($y);
-            $tmp = substr($tmp, -$this->bitCoded);
-            $result .= $tmp;
+			if ($y >= 0) {
+	           $tmp = '00000000' . decbin($y);
+               $tmp = substr($tmp, -$this->bitCoded);
+               $result .= $tmp;
+			   }
+	
           } //$i = 0; $i < ceil($target / $this->bitCoded); $i++
-        if ($start == $this->myProtocol->ukptr)
+ //       if ($start == $this->myProtocol->ukptr)
+          if (($result == ''))
           {
             /*        
             echo "error 5 <br>";
@@ -1669,7 +1713,7 @@ class irp_bitSpec
             */
             return false;
           }
-        // echo 'Decode ok = '.$result.'<br>';                   
+ //       echo 'Decode ok = '.$result.'<br>';                   
         return $result;
       }
     /* 
@@ -1678,17 +1722,18 @@ class irp_bitSpec
      */
     private function raw2decoded($min)
       {
-        // skips durations (if any) 
         if ($this->myProtocol->ukptr >= count($this->myProtocol->ukNorm))
           {
-            //        echo "error 1 <br>";
-            if ($this->myProtocol->errPosition < 0)
-                $this->myProtocol->errPosition = $this->myProtocol->ukptr;
+     //       echo "error 1 <br>";
+     //       if ($this->myProtocol->errPosition < 0)
+     //           $this->myProtocol->errPosition = $this->myProtocol->ukptr;
             return -1;
           }
-        while (abs($this->myProtocol->ukNorm[$this->myProtocol->ukptr]) > 4 * $this->getMaxCodeTime())
+/*		  
+       // skips durations (if any) 
+       while (abs($this->myProtocol->ukNorm[$this->myProtocol->ukptr]) > 4 * $this->getMaxCodeTime())
           {
-            //      echo ' raw2decoded SKIP duration @' . $this->myProtocol->ukptr . ' Found = ' . $this->myProtocol->ukNorm[$this->myProtocol->ukptr] . ' <br>';       
+           echo ' raw2decoded SKIP duration @' . $this->myProtocol->ukptr . ' Found = ' . $this->myProtocol->ukNorm[$this->myProtocol->ukptr] . ' <br>';       
             $this->myProtocol->ukptr++;
             if ($this->myProtocol->ukptr >= count($this->myProtocol->ukNorm))
               {
@@ -1696,6 +1741,7 @@ class irp_bitSpec
                 
                 return -1; // last value
               }
+  */
             /*           
             {
             echo "error 2 <br>";
@@ -1704,16 +1750,16 @@ class irp_bitSpec
             return -1;
             }
             */
-          } //abs($this->myProtocol->ukNorm[$this->myProtocol->ukptr]) > 4 * $this->getMaxCodeTime()
+ //         } //abs($this->myProtocol->ukNorm[$this->myProtocol->ukptr]) > 4 * $this->getMaxCodeTime()
         if ($min > 0)
           {
             $target = ($this->myProtocol->decodePtr + $min - strlen($this->myProtocol->bitDecoded));
             if ($target < 0)
                 return -1;
             $data = $this->decodeBit($target);
-            if ($data === false)
-                $data = substr('0000000000000000', -$target);
-            //              echo 'raw2decoded request '.$target.' bits found:'.$data.' <br>';     
+            if ($data === false) ;
+        //              $data = substr('0000000000000000', -$target);
+//    echo 'raw2decoded request '.$target.' bits found:'.$data.' <br>';     
             $this->myProtocol->bitDecoded .= $data;
             return -1;
           }
@@ -1745,32 +1791,52 @@ class irp_bitSpec
     /*
      * Adds/gets $size bits for $value to output/input stream (encoding/decoding phase)
      * (really it puts bits in a bitbuffer for late codification)
-     * &mode = 'raw'  =>  523|-523|523  // raw output
-     * &mode = 'bit'  =>  100101        // bit output
-     * &mode = 'code' =>  2|-1|2        // output  for codeBit (special internal)
+     * &smode = 'raw'  =>  523|-523|523  // raw output
+     * &smode = 'bit'  =>  100101        // bit output
+     * &smode = 'code' =>  2|-1|2        // output  for codeBit (special internal)
      */
-    public function toStream($value, $size, $mode)
+    public function toStream($value, $size, $smode)
       {
+	    $reverse = false;
         if ($size == '')
-            $size = 16;
+            $size = 31;
+	    if ($size < 0)	{
+		    $size = abs($size);
+			$reverse = true;
+	    }
+ // echo  "toStream($value, $size, $smode) ";
         $result = '';
-        if (!($this->myProtocol->isDecode() || ($mode == 'code')))
+        if (!($this->myProtocol->isDecode() || ($smode == 'code')))
           {
             // ENCODE:  stores data to buffer, for late coding    
             if ($this->myProtocol->isInputRaw())
               {
                 // data from processing IRP + values
-                $tmp = '0000000000000000' . decbin($value);
+                $tmp = '000000000000000000000000000000000' . decbin($value);
                 $this->bitbuffer .= substr($tmp, -$size);
               } //$this->myProtocol->isInputRaw()
             else
               {
+			  
                 // data from HEX data string
-                $this->bitbuffer .= $this->myProtocol->getBits($size);
+				 $tmp = $this->myProtocol->getBits($size);
+//		echo  "gets $tmp  ";
+         		if ($reverse){
+				     $tmp = strrev($tmp);   // like bitfield2int, F:-4 reverses bit order
+				 }
+	// removed, test case Kathrein			 
+	//			 if ($value != 0){
+	//			     $tmp = '000000000000000000000000000000000' . decbin($value);
+    //                 $tmp = substr($tmp, -$size);
+	//			 }
+				 
+ // echo  " == $tmp <br> ";
+               $this->bitbuffer .= $tmp;
               }
             return false;
-          } //!($this->myProtocol->isDecode() || ($mode == 'code'))
-        if ($mode == 'code')
+          } //!($this->myProtocol->isDecode() || ($smode == 'code'))
+ 
+    if ($smode == 'code')
           {
             // for coding recursion =>  2|-1|2 (immediate output  for normCode-internal use)
             for ($i = 0; $i < ($size / $this->bitCoded); $i++)
@@ -1787,15 +1853,16 @@ class irp_bitSpec
             $result = str_replace(',', irp_protocol::CHAR_LIST, $result);
             //   echo ' = '.ltrim($result, irp_protocol::CHAR_LIST). '<br>';  
             return ltrim($result, irp_protocol::CHAR_LIST);
-          } //$mode == 'code'
-        // decode:    
+          } //$smode == 'code'
+        
+		//========== decode:    
         $w = $this->raw2decoded($size); // push bits in FIFO
         if ($w > 0)
           {
             $size = $w;
-            //        echo ' return size '.$w.'<br>';
+           //         echo ' return size '.$w.'<br>';
           }
-        //      echo ' toStream bit '.$size.' from '.$this->myProtocol->decodePtr.' data = '.$this->myProtocol->bitDecoded.'<br>';            
+ //   echo ' toStream bit '.$size.' from '.$this->myProtocol->decodePtr.' data = '.$this->myProtocol->bitDecoded.'<br>';            
         $tmp = substr($this->myProtocol->bitDecoded, $this->myProtocol->decodePtr, $size); // pop only bits required
         $this->myProtocol->decodePtr += $size;
         if ($this->myProtocol->order == 'lsb')
@@ -1803,14 +1870,18 @@ class irp_bitSpec
             $tmp = strrev($tmp); // reverse bits    
           } //$this->myProtocol->order == 'lsb'
         // stores result in  dataDecoded  
-        $this->myProtocol->dataDecoded[$this->myProtocol->ukdata] = bindec($tmp);
-        if (($w > 0) && ($this->myProtocol->uk2data != ''))
-          {
-            $this->myProtocol->dataDecoded[$this->myProtocol->uk2data] = $w;
-            //  echo 'DECODED special :X '.$this->myProtocol->uk2data.' => '.$w.'<br>';
-          }
-        //   echo 'DECODED '.$this->myProtocol->ukdata.' => '.$tmp.'<br>';
-        return false;
+		if (isset($this->myProtocol->dataDecoded[$this->myProtocol->ukdata])){
+	//	    $this->myProtocol->dataDecoded[$this->myProtocol->ukdata] += 256*bindec($tmp);
+		} else {
+			$this->myProtocol->dataDecoded[$this->myProtocol->ukdata] = bindec($tmp);
+			if (($w > 0) && ($this->myProtocol->uk2data != ''))
+			  {
+				$this->myProtocol->dataDecoded[$this->myProtocol->uk2data] = $w;
+//		 echo 'DECODED special :X '.$this->myProtocol->uk2data.' => '.$w.'<br>';
+			  }
+//	  echo 'DECODED '.$this->myProtocol->ukdata.' => '.$tmp.' = '.bindec($tmp).'<br>';
+		  }
+	  return false;
       }
     /*
      * for numeric bitfield like  '6:4:2'
@@ -1827,7 +1898,7 @@ class irp_bitSpec
         // processing size   
         if ($parts[1] == '') // case D::4  
           {
-            $size = '16'; //infinite
+            $size = '31'; //infinite
           } //$parts[1] == ''
         else if ($parts[1][0] == '-') // case D:-4: 
           {
@@ -1841,7 +1912,7 @@ class irp_bitSpec
         $x &= $this->myProtocol->BMASK[$size];
         if ($reverse ^ $reverseit)
           {
-            $data = '0000000000000000' . decbin($x);
+            $data = '00000000000000000000000000000000' . decbin($x);
             $data = substr($data, -$size);
             $data = strrev($data); // reverse bits    
             $x    = bindec($data);
@@ -1855,8 +1926,9 @@ class irp_bitSpec
      */
     public function bitfield2raw($value)
       {
-        $parts = explode(':', $value . ':0');
-        $x     = $this->bitfield2int($value, $this->myProtocol->order == 'lsb');
+	    $parts = explode(':', $value . ':0');
+        $x     = $this->bitfield2int($value, $this->myProtocol->order == 'lsb');	
+// echo "bitfield2raw($value) == $x <br>";		
         return $this->toStream($x, $parts[1], $this->myProtocol->getOutMode());
       }
   } // ends irp_bitSpec class
@@ -2015,7 +2087,7 @@ class irp_bitStream
     // local,  transforms expressions(if any) to numbers
     private function evalBitField($bitField)
       {
-        // echo 'evalbitField: '.$bitField;
+   //     echo 'evalbitField: '.$bitField;
         // first operand  
         $e  = $this->getRightOperand($bitField, 0);
         $v1 = $this->evalExp(substr($bitField, 0, $e + 1));
@@ -2056,7 +2128,7 @@ class irp_bitStream
           {
             $tmp = $v1 . ':' . $v2;
           }
-        //  echo ' => '.$tmp.'<br>';    
+ //       echo ' => '.$tmp.'<br>';    
         return $tmp; // numeric bitfield like 8:4:2
       }
     /*
@@ -2242,11 +2314,15 @@ class irp_bitStream
         $p   = strpos($bitField, ':');
         $q   = strrpos($bitField, ':');
         $var = substr($bitField, 0, $p);
-        if ((!ctype_alpha($var)) || ($p != $q))
-            $this->myProtocol->ukdata = $bitField; // simple vars
+        if ((!ctype_alpha($var)) || ($p != $q)){
+            $vField = $this->evalBitField($bitField);
+			$r   = strpos($vField, ':');
+            $this->myProtocol->ukdata = $var.substr($vField,$r); // simple vars
+			}
         else
             $this->myProtocol->ukdata = substr($bitField, 0, $p); // expressions bitfield
-        return $this->myBitSpec->bitfield2raw($this->evalBitField($bitField));
+
+		return $this->myBitSpec->bitfield2raw($this->evalBitField($bitField));
       }
     // processes variations
     // return item or false
@@ -2312,7 +2388,7 @@ class irp_bitStream
         $this->tmpBuffer = ''; // start values
         $this->outptr    = 0;
         $this->tmpTime   = 0;
-        //  echo 'processing IRstream: '.$this->IRStream.'<br>';
+   //     echo 'processing IRstream: '.$this->IRStream.'<br>';
         $items           = explode(',', $this->IRStream);
         $reend           = count($items);
         // processes IRstream 
@@ -2320,8 +2396,8 @@ class irp_bitStream
           {
             //	    if ($this->myProtocol->isError()) break;
             $item = trim($items[$index]);
-            //      echo ' Buffer: '.$this->tmpBuffer.' <br>';
-            //   echo ' processing item: '.$item.'<br>';
+          // echo ' Buffer: '.$this->tmpBuffer.' <br>';
+  //       echo ' processing item: '.$item.'<br>';
             // variations: [T=1][T=0]
             if ($item[0] == '[')
               {
@@ -2333,8 +2409,7 @@ class irp_bitStream
                   } //$item === false
               } // no continue here: must eval new $item
             //   IRstream: (x,y,..)
-            if ($item[0] == '(')
-              {
+            if (($item[0] == '(') && (!irp_getRMatchBrace($item, '(', 0, ')'))){
                 $tot = $item;
                 while (!irp_getRMatchBrace($tot, '(', 0, ')'))
                   {
@@ -2387,6 +2462,7 @@ class irp_bitStream
             if (strpos($item, ':'))
               {
                 $tmp = $this->evalBitField2raw($item);
+  //       echo "bitfield $item = $tmp <br>";				
                 if ($tmp === false)
                     continue;
                 $this->appendBuffer($tmp);
@@ -2492,7 +2568,7 @@ class irp_bitStream
         $tmp = $this->myBitSpec->flushBitBuffer(); // just in case
         $this->appendBuffer($tmp);
         $toSend = ltrim($this->tmpBuffer, irp_protocol::CHAR_LIST);
-        //  echo 'recursion done <br>';
+ //  echo "recursion done: $toSend <br>";
         return $toSend;
       }
     
@@ -2526,8 +2602,11 @@ class irp_bitStream
               {
                 if ($this->myProtocol->isDecode())
                   {
-                    if (isset($this->myProtocol->dataDecoded[$nx]))
-                        $nirp = $this->myProtocol->dataDecoded[$nx];
+                    if (isset($this->myProtocol->dataDecoded[$nx])) {
+					    $nirp = $this->myProtocol->dataDecoded[$nx];
+                     } else {
+					    $nirp = 1;
+	                 }                  
                   }
                 else
                   {
@@ -2535,7 +2614,7 @@ class irp_bitStream
                   }
               }
           }
-        // echo " nuser = $nuser, level =  ".$this->deep.", this->rrepeat =[".$this->rrepeat."], nirp = $nirp, force = $force  <br>"  ;       
+    //    echo " nuser = $nuser, level =  ".$this->deep.", this->rrepeat =[".$this->rrepeat."], nirp = $nirp, force = $force  <br>"  ;       
         //------------------------
         if ($force)
             return $nirp;
@@ -2560,10 +2639,12 @@ class irp_bitStream
         $this->myProtocol->ukExtra = 0; // zero only at decode start
         $more                      = false;
         $storedecode               = array();
+		$startBitPtr               = $this->myProtocol->bitptr;
         //               echo "enter Analise level ".$this->deep."<br>";
         do
           {
             $more              = false;
+			$this->myProtocol->bitptr = $startBitPtr;
             $this->myProtocol->ukExtra = 0; // zero only at decode start
            // echo '  pass '.$this->thisPass.'/' .$this->nPass.'<br>';       
             $this->storedecode = $this->myProtocol->dataDecoded;
@@ -2591,7 +2672,7 @@ class irp_bitStream
                         $rawData .= '  ' . $data;
                         
                         $this->myProtocol->decodePtr = strlen($this->myProtocol->bitDecoded); // just in case
-                        if ($this->myProtocol->bitDecoded[$this->myProtocol->decodePtr - 1] != ' ')
+                        if (($this->myProtocol->decodePtr > 0) && $this->myProtocol->bitDecoded[$this->myProtocol->decodePtr - 1] != ' ')
                           {
                             $this->myProtocol->bitDecoded .= '  ';
                             $this->myProtocol->decodePtr += 2;
@@ -2610,10 +2691,10 @@ class irp_bitStream
                     //              echo "kill data decoded bin<br>";
                   }
               }
-            // echo 'Analize return = '.$rawData .'<br>';                    
+          // echo 'Analize return = '.$rawData .'<br>';                    
             // case decode
-            if ($this->myProtocol->isDecode() && ($this->getRepeatValue(12) > $this->thisPass) && (count($this->myProtocol->ukNorm) - $this->myProtocol->ukptr > 4))
-              {
+          if ($this->myProtocol->isDecode() && ($this->getRepeatValue(12) > $this->thisPass) && ((count($this->myProtocol->ukNorm) - $this->myProtocol->ukptr) > 1))
+               {
                 $this->thisPass++;
                 $more = true;
                 $this->nPass++;
@@ -2623,7 +2704,7 @@ class irp_bitStream
                 $this->thisPass++;
                 $more = $this->getRepeatValue($this->nPass) >= $this->thisPass;
               }
-            //  echo "  more => $more  <br>";    
+   //   echo "  more => $more  <br>";    
             if ($this->thisPass == $LIMITPASS)
                 echo "*** ERROR encode/decode loop never ends  <br>";
           } while ($more && $this->thisPass < $LIMITPASS);
@@ -2711,7 +2792,7 @@ function irp_explodeVerify($result)
   }
 /*
  *  Aux function to alterate RAW1
- *  returns a RawArray [kherz, base, count, raw]
+ *  returns a RawArray [khertz, base, count, raw]
  */
 function irp_explodeRAW1($raw1)
   {
@@ -2722,7 +2803,7 @@ function irp_explodeRAW1($raw1)
     //  echo " split: $info + $rawx <br>";	
     $info         = irp_onion($info, '{', '}');
     $datas        = explode(',', $info);
-    $tmp['kherz'] = $datas[0];
+    $tmp['khertz'] = $datas[0];
     $tmp['base']  = $datas[1];
     $tmp['count'] = $datas[2];
     return $tmp;
@@ -2730,6 +2811,25 @@ function irp_explodeRAW1($raw1)
 // inverse of irp_explodeRAW1()
 function irp_implodeRAW1($rawArray)
   {
-    return '{' . $rawArray['kherz'] . ',' . $rawArray['base'] . ',' . $rawArray['count'] . '}' . $rawArray['raw'];
+    return '{'.$rawArray['khertz'].','.$rawArray['base'] . ',' . $rawArray['count'] . '}' . $rawArray['raw'];
+  }
+  
+// test to skip head and tail of RAW timings 
+function irp_isInRange($i, $tot){
+   return(($i > SKIPFIRST) && ( $i < $tot - SKIPLAST));
+}
+  
+// calculates total time (skip first, last)  to use with RAW and RAW_0 (no compressed)
+function irp_rawMicros($raw)
+  {
+    // excludes first and last times
+    $sum   = 0;
+    $times = explode('|', $raw);
+	$tot = count($times);
+	foreach($times as $i => $value){
+	     if (irp_isInRange($i, $tot))
+		       $sum += abs($value);
+	}
+    return $sum;
   }
 ?>

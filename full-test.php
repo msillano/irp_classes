@@ -22,7 +22,7 @@ $d = dirname(__FILE__);
 include("$d/irp_classes.php");
 // ------------------------------------- test code
 $protocol = 'JVC'; // change default here to run this alone
-$number   = 1; // number of stream repetitions
+$number   = 3; // number of stream repetitions
 if (isset($_GET['protocol'])) // called from index: it uses parameter
     $protocol = $_GET['protocol'];
 //--------------------- some IRP example for test

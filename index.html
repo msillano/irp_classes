@@ -1,3 +1,22 @@
+<!--
+  index.html - This file is part of irp_classes.
+  
+  irp_classes is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  irp_classes is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  --------
+  Copyright (c) 2017 Marco Sillano.  All right reserved.
+-->
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="./css/style.css">
@@ -7,10 +26,10 @@
     <hr>
     <div class='note'>
         <p>
-            This classes implements the core algorithms required for working with IR remote controls, i.e. encode and decode RAW IR commands, using informations about the IR protocol in <a href="http://www.hifi-remote.com/wiki/index.php?title=IRP_Notation">'IRP notation'.</a> The <code>irp_classes</code> is an 'execution process' for IRPs, extended to <i><b>encode</b></i> and <i><b>decode</b></i> process of IR raw streams.
+            This classes implements the core algorithms required for working with IR remote controls, i.e. encode and decode RAW IR commands, using informations about the IR protocol in <a href="http://www.hifi-remote.com/wiki/index.php?title=IRP_Notation" target="_blank">'IRP notation'.</a> The <code>irp_classes</code> is an 'execution process' for IRPs, extended to <i><b>encode</b></i> and <i><b>decode</b></i> process of IR raw streams.
             <BR> In this library you also found some methods to handle <i>RAW data streams</i>, without IRP, for 'learn and repeat' applications.
             <br>
-            <code>irp_classes</code> was designed to help me (and you) to build good applications using IR Remote Control, like media home automation, with <a href="http://www.hifi-remote.com/johnsfine/DecodeIR.html">knowns IRPs</a> and not for analysing or reverse-engineering unknowns IR protocols, because for that are many better applications (IRremote, IrScrutinizer etc..).
+            <code>irp_classes</code> was designed to help me (and you) to build good applications using IR Remote Control, like media home automation, with <a href="http://www.hifi-remote.com/johnsfine/DecodeIR.html" target="_blank">knowns IRPs</a> and not for analysing or reverse-engineering unknowns IR protocols, because for that are many better applications (IRremote, IrScrutinizer etc..).
             <BR>
 
             <p>To store and retrieve IR commands you have many options:
@@ -25,7 +44,7 @@
     <DL>
         <div class='note'>
             <h3>Test:</h3> Of course any design using IR is influenced by hardware and by the communications between host and IR device (Serial communications using php in Win environment are not easy). Here some simple example test pages.
-            <br> For a more complex demo see <b><code>remoteDB</code></b>.
+            <br> For a more complex demo see <b><code><a href="https://github.com/msillano/remoteDB" target="_blank">remoteDB</a></code></b>.
         </div>
         <hr>
         <DL>
@@ -102,6 +121,10 @@
         </DD>
     </DL>
     <hr>
-    <center> <a href="./../remoteDB/index.html">to remoteDB test</a> &gt;&gt;&gt; </center>
+	<hr>
+	<script src="footer.js"></script> 
+    <br>
+	<hr>
+  <br>
 </body>
 </html>
