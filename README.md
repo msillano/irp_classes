@@ -27,13 +27,15 @@ LIMITS
  -  Raw receive buffer size: no limits (with Arduino uno Rev.3:  300)
  -  Raw transmit size:no limits (with Arduino uno Rev.3:  300)
  
- WORK IN PROGRESS
- This is a work in progress project:
+ WORK IN PROGRESS project, now composed of following modules:
  
  1) irp_classes (https://github.com/msillano/irp_classes): base classes and libray to work with IRP and RAW IR streams. Demo:  (receive) + decode and analyse IR commands.
  
  2) remotesDB (https://github.com/msillano/remotesDB):  MySQL DB for IRP applications and related php tools. Demo: replica of any remote control in DB.
  
+ 3) remotesDBdiscovery (https://github.com/msillano/remotesDB):  This extension of remotesDB is for the management of new remote controls, with 100+ IRP
+ 
+ 4) USBphpTunnel_fifo (https://github.com/msillano/USBphpTunnel_fifo): This Android app allows you to use a TVbox (e.g. MXQ) as stand alone web server running remotesDB, talking via USB with an Arduino board as IR interface.
 
 INSTALLATION
 
