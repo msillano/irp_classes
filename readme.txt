@@ -18,3 +18,9 @@ Serial communications php-Arduino in windows:
 note:
 The 'decode-test' demo can run without Arduino IR HW and serial extension, using recorded IR data.
 If you have some different IR HW, modify irp_rxtxArduino.php to receive RAW data from your HW.
+
+==================================
+Ver 1.3
+- many bug corrections
+- updateted with remoteDBdiscovery and USBphpTunnel
+
